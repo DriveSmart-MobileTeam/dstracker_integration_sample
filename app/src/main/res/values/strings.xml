@@ -1,0 +1,24 @@
+<resources>
+    <string name="app_name">DS tracker</string>
+
+    <string name="start_trip">Start</string>
+    <string name="stop_trip">Stop</string>
+    <string name="define_user">Define user</string>
+    <string name="stablish_user">Stablish user</string>
+    <string name="text_or_email">text /or/ email</string>
+    <string name="manual_title">Manual Trips</string>
+    <string name="auto_title">Automatic Trips</string>
+    <string name="auto_trip">Automatic</string>
+    <string name="semi_auto_trip">Semi</string>
+    <string name="permissions_gps_status">GPS:</string>
+    <string name="permissions_battery_status">Battery:</string>
+    <string name="check_perm">Check</string>
+    <string name="permissions_semi_status">Basic Perms GPS:</string>
+    <string name="permissions_auto_status">Automatic Perms GPS: </string>
+    <string name="optimized">OPTIMIZED</string>
+    <string name="no_optimized">No optimized</string>
+    <string name="enabled">Enabled</string>
+    <string name="disabled">Disabled</string>
+    <string name="ok">OK</string>
+    <string name="nok">NOK</string>
+</resources>
