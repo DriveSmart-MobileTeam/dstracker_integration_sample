@@ -1,4 +1,3 @@
-## Descripción
 En esta guía de inicio rápido, se describe cómo configurar el SDK de Drive-Smart en tu app para que puedas evaluar los viajes realizados a través de dispositivos Android.
 
 La configuración del SDK de Drive-Smart requiere realizar tareas en el IDE. Para finalizar la configuración, deberás realizar un viaje de prueba a fin de confirmar el funcionamiento correcto del entorno.
@@ -39,18 +38,14 @@ Si aún no lo has hecho, descarga e instala el entorno de desarrollo y las libre
 
 ```
 dependencies {
-
 	// ......
-    
 	implementation 'DriveSmart:DS-SDK:5.20.28'
-    
   	// ......
 }
-
 ```
 
 
-## Paso 3: Permisos
+## Permisos
 
 Es necesario definir los permisos correspondientes, en caso contrario el SDK responderá distintos mensajes de error.
 
@@ -58,7 +53,6 @@ Permisos en `Manifest` del proyecto:
 
 ```
 <!-- ... -->
-
 <!-- Servicio para creación/consulta usuario -->
 <uses-permission android:name="android.permission.INTERNET"/>
 <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
@@ -72,53 +66,39 @@ Permisos en `Manifest` del proyecto:
 <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
 <uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" />
 <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
-
 <!-- ... -->
-
 ```
-
 Permisos de ubicación que deben consultarse y estar activos en las clases del proyecto.
-
 ```
 // ...
-
 Manifest.permission.ACCESS_COARSE_LOCATION
 Manifest.permission.ACCESS_FINE_LOCATION
-
 // ...
 ```
 
 Además de los permisos básicos para la evaluación de viajes indicados previamente, es necesario el siguiente permiso para poder activar la grabación automática de viajes:
 
 ```
-
 // ...
-
 Manifest.permission.ACCESS_BACKGROUND_LOCATION
-
 // ...
-
 ```
 
 Por último, se debe confirmar que la aplicación no está incluida como aplicación optimizada. Para ello se puede consultar el estado con el siguiente extracto de código:
 
 ```javascript
-
 // ...
-
 PowerManager powerManager = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
 boolean isbatteryOptimized = powerManager.isDeviceIdleMode() && !powerManager.isIgnoringBatteryOptimizations(context.getPackageName());
-
 // ...
-
 ```
 
 Si todos los permisos indicados están correctamente configurados, el entorno estará configurado y se podrán realizar viajes.
 
 
-## Presentar la interfaz pública
+## Interfaz pública
 
-* En el archivo `Java o Kotlin` del** proyecto**, agrega la interfaz `DSManagerInterface` e implementa los métodos indicados. Dicha interfaz será la encargada de recibir los eventos que el SDK genera. El programador decidirá que clase es la encargada.
+* En el archivo `Java o Kotlin` del **proyecto**, agrega la interfaz `DSManagerInterface` e implementa los métodos indicados. Dicha interfaz será la encargada de recibir los eventos que el SDK genera. El programador decidirá que clase es la encargada.
 
   ```java
   @Override
@@ -137,22 +117,18 @@ Si todos los permisos indicados están correctamente configurados, el entorno es
   public void motionStatus(@NonNull DSMotionEvents dsMotionEvents) { }
   ```
   
-## Configuración de SDK
+## Configuración
 
-* En el archivo `Java o Kotlin` del** proyecto**, agrega el objeto principal del sdk e inicializa:
+* En el archivo `Java o Kotlin` del **proyecto**, agrega el objeto principal del sdk e inicializa:
 
   ```java
   // ...
-  
   private DSManager dsManager;
-  
   // ...
   
   public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
   	super.onViewCreated(view, savedInstanceState);
-      
     	// ...
-    	
     	dsManager = DSManager.getInstance(requireActivity());
     		dsManager.configure(apkID, dsResult -> {
             	if (dsResult instanceof Success) {
@@ -160,19 +136,15 @@ Si todos los permisos indicados están correctamente configurados, el entorno es
                 
                 	// Interfaz previamente comentada.
                 	dsManager.setListener(this);
-                
               }else{
-                	String error = ((DSResult.Error) dsResult).getError().getDescription();             
+                	String error = ((DSResult.Error) dsResult).getError().getDescription();         
                 	Log.e("DRIVE-SMART", error);
               }
             	return null;
               });
           }
-  
   	// ...
   }
-  
-  
   ```
 
 ## Vinculación de usuarios
@@ -181,12 +153,10 @@ Para que el SDK de Drive-Smart pueda crear viajes se necesita un identificador d
 
 ```javascript
 // ... 
-
 dsManager.setUserID(USERID, result -> {
     Log.e("DRIVE-SMART", "Defining USER ID: " + USERID);          
     return null;
 });
-
 // ... 
 ```
 
@@ -218,20 +188,15 @@ Si el objeto recibido es valido, a continuación, se debe definir el userID en e
 ### Control de viajes básico:
 
 Para controlar el SDK se muestran las siguientes acciones:
-
 ```
-
 // ...
-
 // Iniciar un viaje:
 dsManager.startService()
-
 // Pausar un viaje:
 dsManager.pauseService()
-
 // Parar un viaje:
 dsManager.stopService()
-
+// ...
 ```
 
 ### Control de viajes automático o semi automático
@@ -278,24 +243,28 @@ dsManager.setMotionStart(false, dsResult -> {
 Se puede consultar si el modo automático está activo:
 
 ```
-
 // ... 
-
 dsManager.isMotionServiceAlive()
-
 // ... 
-
 ```
 
 ### Información del viaje:
-
+Una vez iniciado un viaje, el SDK ofrece una serie de métodos para poder obtener información del viaje. *DSCheckStatus* se obtiene a través del método *checkService()* con la información:
++ Distancia total
++ Tiempo de viaje.
++ Trip ID
++ Estado del GPS.
++ Estado del viaje.
 ```
-
 // ...
-
-// Consultar la información de un viaje:
 DSCheckStatus beanStatus = dsManager.checkService();
+// ...
+```
+A su vez, el método *tripInfo()* ofrece otros datos:
++ Posición inicial del viaje.
++ Última posición obtenida.
+```
+// ...
 DSInfoTrip info = dsManager.tripInfo();
-
 // ...
 ```
