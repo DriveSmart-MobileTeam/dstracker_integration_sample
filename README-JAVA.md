@@ -1,7 +1,7 @@
-`See this guide in other languages:`  [![DSTracker](https://img.shields.io/badge/DSTracker%20Integration-Spanish-success)](https://github.com/DriveSmart-MobileTeam/dstracker_lite_integration_sample/blob/main/README-ES.md)
-[![DSTracker](https://img.shields.io/badge/DSTracker%20Integration-Java-success)](https://github.com/DriveSmart-MobileTeam/dstracker_lite_integration_sample/blob/main/README-JAVA.md)
+`See this guide in other languages:`  [![DSTracker](https://img.shields.io/badge/DSTracker%20Integration-Spanish-success)](https://github.com/DriveSmart-MobileTeam/dstracker_integration_sample/blob/main/README-JAVA-ES.md)
+[![DSTracker](https://img.shields.io/badge/DSTracker%20Integration-Kotlin-success)](https://github.com/DriveSmart-MobileTeam/dstracker_integration_sample/blob/main/README.md)
 
-# DSTracker Integration (Kotlin)
+# DSTracker Integration (Java)
 
 This quick start guide describes how to configure the DriveSmart Tracker library in your app so that you can evaluate the driving activity tracked by Android devices.
 
@@ -50,8 +50,8 @@ dependencies {
 
 ## Permissions
 
-`See this guide in other languages:`  [![DSTracker](https://img.shields.io/badge/DSTracker%20Integration-Spanish-success)](https://github.com/DriveSmart-MobileTeam/dstracker_integration_sample/blob/main/README-ES.md)
-[![DSTracker](https://img.shields.io/badge/DSTracker%20Integration-Java-success)](https://github.com/DriveSmart-MobileTeam/dstracker_integration_sample/blob/main/README-JAVA.md)
+`See this guide in other languages:`  [![DSTracker](https://img.shields.io/badge/DSTracker%20Integration-Spanish-success)](https://github.com/DriveSmart-MobileTeam/dstracker_lite_integration_sample/blob/main/README-ES.md)
+[![DSTracker](https://img.shields.io/badge/DSTracker%20Integration-Java-success)](https://github.com/DriveSmart-MobileTeam/dstracker_lite_integration_sample/blob/main/README-JAVA.md)
 
 # DSTracker Integration (Kotlin)
 
@@ -70,11 +70,8 @@ Project Permissions in `Manifest`:
 <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
 <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
 <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-
-<!-- Automatic trip evaluation -->
 <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
-<uses-permission android:name="com.google.android.gms.permission.ACTIVITY_RECOGNITION" />
-<uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+
 <!-- ... -->
 ```
 Location permissions to be queried and be active in project classes.
@@ -95,84 +92,85 @@ Manifest.permission.ACCESS_BACKGROUND_LOCATION
 
 If all the permissions indicated are correctly configured, the environment will be configured and trips can be made.
 
-
 ## Public interface
 
 * In the ** project ** file, add the interface `DSManagerInterface` and implement the indicated methods. This interface will be in charge of receiving the events that the Tracker generates. The programmer will decide which class is in charge.
+
+  ```java
+  @Override
+  public void startService(@NonNull DSResult result) {}
   
-  ```kotlin
-  override fun startService(dsResult: DSResult) {}
+  @Override
+  public void statusEventService(@NonNull DSResult dsResult) {}
   
-  override fun statusEventService(dsResult: DSResult) {}
+  @Override
+  public void stopService(@NonNull DSResult result) {}
   
-  override fun stopService(dsResult: DSResult) {}
+  @Override
+  public void motionDetectedActivity(@NonNull DSInternalMotionActivities dsInternalMotionActivities, int i) { }
   
-  override fun motionDetectedActivity(dsInternalMotionActivities: DSInternalMotionActivities, i: int) {}
-  
-  override fun motionStatus(dsMotionEvents: DSMotionEvents) {}
+  @Override
+  public void motionStatus(@NonNull DSMotionEvents dsMotionEvents) { }
   ```
 
 ## Configuration
 * In the **project** file, add the library main object and initialize it:
 
-  ```kotlin
-    // ...
-    private DSTrackerLite dsTrackerLite
-    private lateinit var apkID: String
-    private lateinit var userID: String
-    // ...
+  ```java
+  // ...
+  private DSManager dsManager;
+  // ...
   
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        // ...
-        defineConstants()
-        prepareEnvironment() 
-        // ...
-    }
-  
-    private fun defineConstants() {
-        apkID = ""
-        userID = ""
-    }
-  
-    private fun prepareEnvironment() {
-        dsTrackerLite = DSTrackerLite.getInstance(this)
-        dsTrackerLite.configure(apkID) { dsResult: DSResult ->
-            if (dsResult is DSResult.Success) {
-                addLog("DSTracker configured")
-                identifyEnvironmet(userID)
-            } else {
-                val error: String = dsResult.toString()
-                addLog("Configure DSTracker: $error")
-            }
-        }
-    }
-  
-    // ...
+  public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
+  	super.onViewCreated(view, savedInstanceState);
+    	// ...
+    	dsManager = DSManager.getInstance(requireActivity());
+    		dsManager.configure(apkID, dsResult -> {
+            	if (dsResult instanceof Success) {
+              	Log.e("DRIVE-SMART", "Tracker configured");          
+                
+                	// Interfaz previamente comentada.
+                	dsManager.setListener(this);
+              }else{
+                	String error = ((DSResult.Error) dsResult).getError().getDescription();         
+                	Log.e("DRIVE-SMART", error);
+              }
+            	return null;
+              });
+          }
+  	// ...
+  }
   ```
-
 
 ## User linking
 A unique user identifier is required for the DriveSmart Library to create trips.
 
-```kotlin
+```javascript
 // ... 
-dsTrackerLite.setUserId(uid) {
-  addLog("Defining USER ID: $uid")
-}
+dsManager.setUserID(USERID, result -> {
+    Log.e("DRIVE-SMART", "Defining USER ID: " + USERID);          
+    return null;
+});
 // ... 
 ```
 
 To obtain a valid user identifier, the following service can be consulted, whitch will create a new user in the DriveSmart System or return the user if it exist.
 
-```kotlin
-private fun getOrAddUser(user: String) {
-  GlobalScope.launch(Dispatchers.Main) {
-    val session = getUserSession(user)
-
-    userSession = session
-    addLog("User id created: $session")
-  }
+```javascript
+private void getOrAddUser(String user) {
+    dsManager.getOrAddUserIdBy(user, new Continuation<DSDKUserSession>() {
+        @Override
+        public void resumeWith(@NonNull Object o) {
+            if(o instanceof DSDKUserSession){
+                userSession = (DSDKUserSession)o;
+                Log.e("DRIVE-SMART", "User id: " + ((DSDKUserSession)o).getDsUserId());
+            }
+        }
+        @Override
+        public CoroutineContext getContext() {
+            return EmptyCoroutineContext.INSTANCE;
+        }
+    });
 }
 ```
 
@@ -209,26 +207,28 @@ Initially, we deactivate the automatic trip evaluation function, at the end of t
 * **Semi-Automatic:**
   Set the first parameter to `TRUE` and the second to` FALSE`.
 
-```kotlin
+```javascript
 
 // ... 
 // AUTOMATIC:
-dsManager.setMotionStart(
-                            enable = true,
-                            isForegroundService = true
-                        ) { dsResult2: DSResult ->
-                            addLog("Motion - automatic (enable): $dsResult2")
-                        }
+dsManager.setMotionStart(false, dsResult -> {
+    Handler handler = new Handler(Looper.getMainLooper());
+    handler.postDelayed(() -> dsManager.setMotionStart(true, true, dsResult2 -> {
+	    return null;
+    }), 2000);
+    return null;
+});
 
 // ... 
 
 // SEMI-AUTOMATIC:
-dsManager.setMotionStart(
-                            enable = true,
-                            isForegroundService = false
-                        ) { dsResult2: DSResult ->
-                            addLog("Motion - automatic (enable): $dsResult2")
-                        }
+dsManager.setMotionStart(false, dsResult -> {
+    Handler handler = new Handler(Looper.getMainLooper());
+    handler.postDelayed(() -> dsManager.setMotionStart(true, false, dsResult2 -> {
+	    return null;
+    }), 2000);
+    return null;
+});
 
 // ... 
 
@@ -238,7 +238,7 @@ You can check if the automatic mode is active:
 
 ```
 // ... 
-dsManager.isMotionServiceAlive()
+dsManager.isMotionServiceAlive();
 // ... 
 ```
 ### Trip info:
