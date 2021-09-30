@@ -3,18 +3,15 @@ package com.ds.test
 import android.Manifest
 
 import androidx.appcompat.app.AppCompatActivity
-import com.drivesmartsdk.interfaces.DSManagerInterface
-import com.drivesmartsdk.singleton.DSManager
-import com.drivesmartsdk.DSDKUserSession
+import com.drivesmart.tracker.interfaces.DSManagerInterface
 import android.os.Bundle
 import android.os.Handler
 import android.text.method.ScrollingMovementMethod
-import android.os.Looper
-import android.view.View
-import com.drivesmartsdk.enums.DSNotification
-import com.drivesmartsdk.enums.DSInternalMotionActivities
-import com.drivesmartsdk.enums.DSMotionEvents
-import com.drivesmartsdk.enums.DSResult
+import com.drivesmart.tracker.enums.DSNotification
+import com.drivesmart.tracker.enums.DSInternalMotionActivities
+import com.drivesmart.tracker.enums.DSMotionEvents
+import com.drivesmart.tracker.enums.DSResult
+import com.drivesmart.tracker.singleton.DSTracker
 import com.ds.test.databinding.ActivityMainBinding
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -23,12 +20,11 @@ import kotlinx.coroutines.withContext
 
 class MainActivityKotlin : AppCompatActivity(), DSManagerInterface {
     private lateinit var binding: ActivityMainBinding
-    private lateinit var dsManager: DSManager
+    private lateinit var dsTracker: DSTracker
     private lateinit var apkID: String
     private lateinit var userID: String
     private lateinit var handlerTrip: Handler
-    private var initialInfo = true
-    private var userSession: DSDKUserSession? = null
+    private var userSession: String? = null
 
     companion object {
         val PERMISSIONS_GPS = arrayOf(
@@ -42,7 +38,6 @@ class MainActivityKotlin : AppCompatActivity(), DSManagerInterface {
     }
 
     private fun defineConstants() {
-        // TODO
         apkID = ""
         userID = ""
     }
@@ -62,49 +57,11 @@ class MainActivityKotlin : AppCompatActivity(), DSManagerInterface {
         binding.logText.movementMethod = ScrollingMovementMethod()
         checkPerms()
         binding.checkPermButton.setOnClickListener { checkPerms() }
-        binding.autoButton.setOnClickListener {
-            if (dsManager.isRunningService()) {
-                dsManager.stopService()
-            }
-            if (dsManager.isMotionServiceAlive()) {
-                dsManager.setMotionStart(false) { dsResult: DSResult ->
-                    addLog("Motion - automatic (disabled): $dsResult")
-                }
-            } else {
-                dsManager.setMotionStart(false) { dsResult: DSResult? ->
-                    val handler = Handler(Looper.getMainLooper())
-                    handler.postDelayed({
-                        dsManager.setMotionStart(
-                            enable = true,
-                            isForegroundService = true
-                        ) { dsResult2: DSResult ->
-                            addLog("Motion - automatic (enable): $dsResult2")
-                        }
-                    }, 2000)
-                }
-            }
-        }
-        binding.semiAutoButton.setOnClickListener { view: View? ->
-            if (dsManager.isRunningService()) {
-                dsManager.stopService()
-            }
-            dsManager.setMotionStart(false) { dsResult: DSResult? ->
-                val handler = Handler(Looper.getMainLooper())
-                handler.postDelayed({
-                    dsManager.setMotionStart(
-                        enable = true,
-                        isForegroundService = false
-                    ) { dsResult2: DSResult ->
-                        addLog("Motion - semi_automatic: $dsResult2")
-                    }
-                }, 2000)
-            }
-        }
-        binding.startTripButton.setOnClickListener { dsManager.startService() }
-        binding.stopTripButton.setOnClickListener { dsManager.stopService() }
+        binding.startTripButton.setOnClickListener { dsTracker.start() }
+        binding.stopTripButton.setOnClickListener { dsTracker.stop() }
         binding.setUserButton.setOnClickListener {
             if (userSession != null) {
-                identifyEnvironmet(userSession!!.dsUserId)
+                identifyEnvironmet(userSession!!)
             } else {
                 addLog("no user-session info")
             }
@@ -139,47 +96,37 @@ class MainActivityKotlin : AppCompatActivity(), DSManagerInterface {
         }
     }
 
-    private suspend fun  getUserSession(user: String): DSDKUserSession? =
+    private suspend fun  getUserSession(user: String): String =
         withContext(Dispatchers.IO) {
-            return@withContext  dsManager.getOrAddUserIdBy(user)
+            return@withContext  dsTracker.getOrAddUserIdBy(user)
         }
 
     private fun getOrAddUser(user: String) {
         GlobalScope.launch(Dispatchers.Main) {
             val session = getUserSession(user)
 
-            if (session is DSDKUserSession) {
-                userSession = session
-                addLog("User id created: " + session.dsUserId)
-            } else {
-                addLog("getOrAddUserIdBy: $session")
-            }
+            userSession = session
+            addLog("User id created: $session")
         }
     }
 
     private fun prepareEnvironment() {
-        dsManager = DSManager.getInstance(this)
-        dsManager.configure(apkID) { dsResult: DSResult ->
+        dsTracker = DSTracker.getInstance(this)
+        dsTracker.configure(apkID) { dsResult: DSResult ->
             if (dsResult is DSResult.Success) {
-                addLog("SDk configured")
+                addLog("DSTracker configured")
                 identifyEnvironmet(userID)
-                configEnvironment()
             } else {
-                val error: String = (dsResult as Error).message.toString()
-                addLog("Configure SDK: $error")
+                val error: String = dsResult.toString()
+                addLog("Configure DSTracker: $error")
             }
         }
     }
 
     private fun identifyEnvironmet(uid: String) {
-        dsManager.setUserID(uid) { result: DSResult? ->
+        dsTracker.setUserId(uid) { result: DSResult? ->
             addLog("Defining USER ID: $uid")
         }
-    }
-
-    private fun configEnvironment() {
-        dsManager.setListener(this)
-        dsManager.setModeOnline(true) { }
     }
 
     // ****************************************v****************************************
@@ -196,16 +143,10 @@ class MainActivityKotlin : AppCompatActivity(), DSManagerInterface {
 
     private val updateTimerThread: Runnable = object : Runnable {
         override fun run() {
-            val beanStatus = dsManager.checkService()
-            val (startLocation, endLocation) = dsManager.tripInfo()
-            if (initialInfo) {
-                addLog("Trip ID: " + beanStatus.tripID)
-                addLog("Initial marker: " + "la: " + startLocation.latitute + " lo: " + startLocation.longitude)
-                initialInfo = false
-            }
+            val beanStatus = dsTracker.getStatus()
+
             addLog("Timer: " + convertMillisecondsToHMmSs(beanStatus.serviceTime))
             addLog("Distance: " + beanStatus.totalDistance)
-            addLog("Marker: " + "la: " + endLocation.latitute + " lo: " + endLocation.longitude)
             handlerTrip.postDelayed(this, 2000)
         }
     }

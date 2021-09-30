@@ -40,7 +40,7 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:1.5.30"
 
     implementation 'androidx.databinding:databinding-runtime:7.0.2'
-    implementation 'DriveSmart:DS-SDK:5.20.28'
+    implementation 'DriveSmart:DS-Tracker-Development:1.0.1'
 
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'

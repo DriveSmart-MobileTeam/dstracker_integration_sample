@@ -3,22 +3,18 @@ package com.ds.test;
 import android.Manifest;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Looper;
 import android.text.method.ScrollingMovementMethod;
-import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.drivesmartsdk.DSDKUserSession;
-import com.drivesmartsdk.enums.DSInternalMotionActivities;
-import com.drivesmartsdk.enums.DSMotionEvents;
-import com.drivesmartsdk.enums.DSNotification;
-import com.drivesmartsdk.enums.DSResult;
-import com.drivesmartsdk.interfaces.DSManagerInterface;
-import com.drivesmartsdk.models.DSCheckStatus;
-import com.drivesmartsdk.models.DSInfoTrip;
-import com.drivesmartsdk.singleton.DSManager;
+import com.drivesmart.tracker.enums.DSInternalMotionActivities;
+import com.drivesmart.tracker.enums.DSMotionEvents;
+import com.drivesmart.tracker.enums.DSNotification;
+import com.drivesmart.tracker.enums.DSResult;
+import com.drivesmart.tracker.interfaces.DSManagerInterface;
+import com.drivesmart.tracker.models.TrackingStatus;
+import com.drivesmart.tracker.singleton.DSTracker;
 import com.ds.test.databinding.ActivityMainBinding;
 
 import kotlin.coroutines.Continuation;
@@ -28,13 +24,13 @@ import kotlin.coroutines.EmptyCoroutineContext;
 public class MainActivityJava extends AppCompatActivity implements DSManagerInterface{
 
     private ActivityMainBinding binding;
-    private DSManager dsManager;
+    private DSTracker dsTracker;
 
     private String apkID;
     private String userID;
     private Handler handlerTrip;
     private boolean initialInfo=true;
-    private DSDKUserSession userSession;
+    private String userSession="";
 
 
     public static final String[] PERMISSIONS_GPS = { Manifest.permission.ACCESS_COARSE_LOCATION,
@@ -69,47 +65,11 @@ public class MainActivityJava extends AppCompatActivity implements DSManagerInte
         checkPerms();
         binding.checkPermButton.setOnClickListener(view -> checkPerms());
 
-        binding.autoButton.setOnClickListener(view -> {
-            if(dsManager.isRunningService()){
-                dsManager.stopService();
-            }
-
-            if(dsManager.isMotionServiceAlive()){
-                dsManager.setMotionStart(false, dsResult -> {
-                    addLog("Motion - automatic (disabled): " + dsResult.toString());
-                    return null;
-                });
-            }else {
-                dsManager.setMotionStart(false, dsResult -> {
-                    Handler handler = new Handler(Looper.getMainLooper());
-                    handler.postDelayed(() -> dsManager.setMotionStart(true, true, dsResult2 -> {
-
-                        addLog("Motion - automatic (enable): " + dsResult2.toString());
-                        return null;
-                    }), 2000);
-                    return null;
-                });
-            }
-        });
-        binding.semiAutoButton.setOnClickListener(view -> {
-            if(dsManager.isRunningService()){
-                dsManager.stopService();
-            }
-            dsManager.setMotionStart(false, dsResult -> {
-                Handler handler = new Handler(Looper.getMainLooper());
-                handler.postDelayed(() -> dsManager.setMotionStart(true, false, dsResult2 -> {
-                    addLog("Motion - semi_automatic: " + dsResult2.toString());
-                    return null;
-                }), 2000);
-                return null;
-            });
-
-        });
-        binding.startTripButton.setOnClickListener(view -> dsManager.startService());
-        binding.stopTripButton.setOnClickListener(view -> dsManager.stopService());
+        binding.startTripButton.setOnClickListener(view -> dsTracker.start());
+        binding.stopTripButton.setOnClickListener(view -> dsTracker.stop());
         binding.setUserButton.setOnClickListener(view -> {
             if(userSession!=null) {
-                identifyEnvironmet(userSession.getDsUserId());
+                identifyEnvironmet(userSession);
             }else{
                 addLog("no user-session info");
             }
@@ -147,31 +107,31 @@ public class MainActivityJava extends AppCompatActivity implements DSManagerInte
         }
     }
 
+
     private void getOrAddUser(String user) {
-        dsManager.getOrAddUserIdBy(user, new Continuation<DSDKUserSession>() {
-            @Override
-            public void resumeWith(@NonNull Object o) {
-                if(o instanceof DSDKUserSession){
-                    userSession = (DSDKUserSession)o;
-                    addLog("User id created: " + ((DSDKUserSession)o).getDsUserId());
-                }else{
-                    addLog("getOrAddUserIdBy: " + o.toString());
-                }
-            }
+        dsTracker.getOrAddUserIdBy(user, new Continuation<String>() {
+            @NonNull
             @Override
             public CoroutineContext getContext() {
                 return EmptyCoroutineContext.INSTANCE;
+            }
+
+            @Override
+            public void resumeWith(@NonNull Object o) {
+                if(o instanceof String){
+                    userSession = o.toString();
+                    addLog("User id created: " + o.toString());
+                }
             }
         });
     }
 
     private void prepareEnvironment() {
-        dsManager = DSManager.getInstance(this);
-        dsManager.configure(apkID, dsResult -> {
+        dsTracker = DSTracker.getInstance(this);
+        dsTracker.configure(apkID, dsResult -> {
             if (dsResult instanceof DSResult.Success) {
                 addLog("SDk configured");
                 identifyEnvironmet(userID);
-                configEnvironment();
             }else{
                 String error = ((DSResult.Error) dsResult).getError().getDescription();
                 addLog("Configure SDK: "+error);
@@ -181,16 +141,10 @@ public class MainActivityJava extends AppCompatActivity implements DSManagerInte
     }
 
     private void identifyEnvironmet(String uid) {
-        dsManager.setUserID(uid, result -> {
+        dsTracker.setUserId(uid, result -> {
             addLog("Defining USER ID: " + uid);
             return null;
         });
-    }
-
-    private void configEnvironment() {
-        dsManager.setListener(this);
-
-        dsManager.setModeOnline(true, dsResult -> null);
     }
 
     // ****************************************v****************************************
@@ -204,18 +158,15 @@ public class MainActivityJava extends AppCompatActivity implements DSManagerInte
     private final Runnable updateTimerThread = new Runnable() {
         @Override
         public void run() {
-            DSCheckStatus beanStatus = dsManager.checkService();
-            DSInfoTrip info = dsManager.tripInfo();
+            TrackingStatus beanStatus = dsTracker.getStatus();
 
             if(initialInfo){
                 addLog("Trip ID: " + beanStatus.getTripID());
-                addLog("Initial marker: " + "la: " + info.getStartLocation().getLatitute() + " lo: " + info.getStartLocation().getLongitude());
                 initialInfo=false;
             }
 
             addLog("Timer: " + convertMillisecondsToHMmSs(beanStatus.getServiceTime()));
             addLog("Distance: " + beanStatus.getTotalDistance());
-            addLog("Marker: " + "la: " + info.getEndLocation().getLatitute() + " lo: " + info.getEndLocation().getLongitude());
 
             handlerTrip.postDelayed(this, 2000);
         }

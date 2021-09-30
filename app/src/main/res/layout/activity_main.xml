@@ -162,51 +162,6 @@
 
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:id="@+id/container_automatic"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
-                    android:background="@color/bg_manual"
-                    android:paddingBottom="16dp"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/container_manual">
-
-                    <TextView
-                        android:id="@+id/textView2"
-                        style="@style/TextAppearance.AppCompat.Medium"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:padding="16dp"
-                        android:text="@string/auto_title"
-                        android:textStyle="bold"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
-
-                    <Button
-                        android:id="@+id/auto_button"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/auto_trip"
-                        app:layout_constraintEnd_toStartOf="@+id/semi_auto_button"
-                        app:layout_constraintHorizontal_bias="0.5"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toBottomOf="@+id/textView2" />
-
-                    <Button
-                        android:id="@+id/semi_auto_button"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/semi_auto_trip"
-                        app:layout_constraintBottom_toBottomOf="@+id/auto_button"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintHorizontal_bias="0.5"
-                        app:layout_constraintStart_toEndOf="@+id/auto_button"
-                        app:layout_constraintTop_toTopOf="@+id/auto_button" />
-
-                </androidx.constraintlayout.widget.ConstraintLayout>
-
                 <TextView
                     android:id="@+id/log_text"
                     android:layout_width="match_parent"
@@ -221,7 +176,7 @@
                     android:scrollbars="vertical"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/container_automatic" />
+                    app:layout_constraintTop_toBottomOf="@+id/container_manual" />
 
                 <View
                     android:id="@+id/view"
