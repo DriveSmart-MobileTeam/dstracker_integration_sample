@@ -8,23 +8,23 @@ import android.text.method.ScrollingMovementMethod;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.drivesmart.tracker.enums.DSInternalMotionActivities;
-import com.drivesmart.tracker.enums.DSMotionEvents;
-import com.drivesmart.tracker.enums.DSNotification;
-import com.drivesmart.tracker.enums.DSResult;
-import com.drivesmart.tracker.interfaces.DSManagerInterface;
-import com.drivesmart.tracker.models.TrackingStatus;
-import com.drivesmart.tracker.singleton.DSTracker;
 import com.ds.test.databinding.ActivityMainBinding;
+import com.dstracker.enums.DSInternalMotionActivities;
+import com.dstracker.enums.DSMotionEvents;
+import com.dstracker.enums.DSNotification;
+import com.dstracker.enums.DSResult;
+import com.dstracker.interfaces.DSManagerInterface;
+import com.dstracker.models.TrackingStatus;
+import com.dstracker.singleton.Tracker;
 
 import kotlin.coroutines.Continuation;
 import kotlin.coroutines.CoroutineContext;
 import kotlin.coroutines.EmptyCoroutineContext;
 
-public class MainActivityJava extends AppCompatActivity implements DSManagerInterface{
+public class MainActivityJava extends AppCompatActivity implements DSManagerInterface {
 
     private ActivityMainBinding binding;
-    private DSTracker dsTracker;
+    private Tracker dsTracker;
 
     private String apkID;
     private String userID;
@@ -109,25 +109,16 @@ public class MainActivityJava extends AppCompatActivity implements DSManagerInte
 
 
     private void getOrAddUser(String user) {
-        dsTracker.getOrAddUserIdBy(user, new Continuation<String>() {
-            @NonNull
-            @Override
-            public CoroutineContext getContext() {
-                return EmptyCoroutineContext.INSTANCE;
-            }
+        dsTracker.getOrAddUserIdBy(user, dsResult -> {
+            userSession = dsResult.toString();
+            addLog("User id created: " + dsResult.toString());
 
-            @Override
-            public void resumeWith(@NonNull Object o) {
-                if(o instanceof String){
-                    userSession = o.toString();
-                    addLog("User id created: " + o.toString());
-                }
-            }
+            return null;
         });
     }
 
     private void prepareEnvironment() {
-        dsTracker = DSTracker.getInstance(this);
+        dsTracker = Tracker.getInstance(this);
         dsTracker.configure(apkID, dsResult -> {
             if (dsResult instanceof DSResult.Success) {
                 addLog("SDk configured");
@@ -218,6 +209,11 @@ public class MainActivityJava extends AppCompatActivity implements DSManagerInte
 
     @Override
     public void motionStatus(@NonNull DSMotionEvents dsMotionEvents) { }
+
+    @Override
+    public void onPointerCaptureChanged(boolean hasCapture) {
+
+    }
     // ****************************************v****************************************
     // ******************** interface DSManagerInterface *******************************
     // ****************************************v****************************************

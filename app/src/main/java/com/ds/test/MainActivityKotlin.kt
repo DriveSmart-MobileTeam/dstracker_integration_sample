@@ -3,16 +3,16 @@ package com.ds.test
 import android.Manifest
 
 import androidx.appcompat.app.AppCompatActivity
-import com.drivesmart.tracker.interfaces.DSManagerInterface
 import android.os.Bundle
 import android.os.Handler
 import android.text.method.ScrollingMovementMethod
-import com.drivesmart.tracker.enums.DSNotification
-import com.drivesmart.tracker.enums.DSInternalMotionActivities
-import com.drivesmart.tracker.enums.DSMotionEvents
-import com.drivesmart.tracker.enums.DSResult
-import com.drivesmart.tracker.singleton.DSTracker
 import com.ds.test.databinding.ActivityMainBinding
+import com.dstracker.enums.DSInternalMotionActivities
+import com.dstracker.enums.DSMotionEvents
+import com.dstracker.enums.DSNotification
+import com.dstracker.enums.DSResult
+import com.dstracker.interfaces.DSManagerInterface
+import com.dstracker.singleton.Tracker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -20,7 +20,7 @@ import kotlinx.coroutines.withContext
 
 class MainActivityKotlin : AppCompatActivity(), DSManagerInterface {
     private lateinit var binding: ActivityMainBinding
-    private lateinit var dsTracker: DSTracker
+    private lateinit var dsTracker: Tracker
     private lateinit var apkID: String
     private lateinit var userID: String
     private lateinit var handlerTrip: Handler
@@ -96,22 +96,23 @@ class MainActivityKotlin : AppCompatActivity(), DSManagerInterface {
         }
     }
 
-    private suspend fun  getUserSession(user: String): String =
-        withContext(Dispatchers.IO) {
-            return@withContext  dsTracker.getOrAddUserIdBy(user)
-        }
 
     private fun getOrAddUser(user: String) {
         GlobalScope.launch(Dispatchers.Main) {
-            val session = getUserSession(user)
-
-            userSession = session
-            addLog("User id created: $session")
+            dsTracker.getOrAddUserIdBy(user){result ->
+                if (result is DSResult.Success) {
+                    userSession = result.toString()
+                    addLog("User id created: $result")
+                } else {
+                    val error: String = (result as DSResult.Error).toString()
+                    addLog("getOrAddUser error: $error")
+                }
+            }
         }
     }
 
     private fun prepareEnvironment() {
-        dsTracker = DSTracker.getInstance(this)
+        dsTracker = Tracker.getInstance(this)
         dsTracker.configure(apkID) { dsResult: DSResult ->
             if (dsResult is DSResult.Success) {
                 addLog("DSTracker configured")
