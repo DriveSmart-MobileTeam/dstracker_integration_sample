@@ -11,13 +11,13 @@ The configuration of DriveSmart Tracker library requires IDE tasks. To finish th
 1. [Requirements](#requirements)
 2. [Installation](#installation)
 3. [Permissions](#permissions)
-4. [Public interface](#public-interface)
-5. [Configuration](#configuration)
+4. [Configuration](#configuration)
 5. [User linking](#user-linking)
 6. [Trip analysis](#trip-analysis)
-1. [Tracker modes](#tracker-modes)
-2. [Trip analysis in manual mode](#trip-analysis-in-manual-mode)
-3. [Trip info](#trip-info)
+  1. [Tracker modes](#tracker-modes)
+  2. [Trip analysis in manual mode](#trip-analysis-in-manual-mode)
+  3. [Public interface](#public-interface)
+  4. [Trip info](#trip-info)
 
 ## Requirements
 If you haven't already, download and install the Android Development Environment and libraries. The integration will be carried out on the next versions:
@@ -101,19 +101,6 @@ Manifest.permission.ACCESS_BACKGROUND_LOCATION
 ```
 
 If all the permissions indicated are correctly configured, the environment will be configured and trips can be made.
-
-
-## Public interface
-
-* In the ** project ** file, add the interface `DSManagerInterface` and implement the indicated methods. This interface will be in charge of receiving the events that the Tracker generates. The programmer will decide which class is in charge.
-  
-  ```kotlin
-  override fun startService(dsResult: DSResult) {}
-  
-  override fun stopService(dsResult: DSResult) {}
-  
-  override fun statusEventService(dsResult: DSResult) {}
-  ```
 
 ## Configuration
 * In the **project** file, add the library main object and initialize it:
@@ -204,6 +191,18 @@ dsManager.pauseService();
 dsManager.stopService();
 // ...
 ```
+
+### Public interface
+
+* In the ** project ** file, add the interface `DSManagerInterface` and implement the indicated methods. This interface will be in charge of receiving the events that the Tracker generates. The programmer will decide which class is in charge.
+
+  ```kotlin
+  override fun startService(dsResult: DSResult) {}
+  
+  override fun stopService(dsResult: DSResult) {}
+  
+  override fun statusEventService(dsResult: DSResult) {}
+  ```
 
 ### Trip info:
 Once a trip has started, Tracker offers a method for obtaining trip information. *TrackingStatus* is obtained throught the *getStatus()* method with the info:

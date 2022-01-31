@@ -11,13 +11,13 @@ La configuración del Tracker de Drive-Smart requiere realizar tareas en el IDE.
 1. [Requisitos](#requisitos)
 2. [Instalación](#instalacin)
 3. [Permisos](#permisos)
-4. [Interfaz pública](#interfaz-pblica)
-5. [Configuración](#configuracin)
+4. [Configuración](#configuracin)
 5. [Vinculación de usuarios](#vinculacin-de-usuarios)
 6. [Registro de viajes](#registro-de-viajes)
   1. [Modos del Tracker](#modos-del-tracker)
   2. [Control de viajes en modo manual](#control-de-viajes-en-modo-manual)
-  3. [Información del viaje](#informacin-del-viaje)
+  3. [Interfaz pública](#interfaz-pblica)
+  4. [Información del viaje](#informacin-del-viaje)
 
 ## Requisitos
 
@@ -111,22 +111,6 @@ boolean isbatteryOptimized = powerManager.isDeviceIdleMode() && !powerManager.is
 
 Si todos los permisos indicados están correctamente configurados, el entorno estará configurado y se podrán realizar viajes.
 
-
-## Interfaz pública
-
-* En el archivo `Java o Kotlin` del **proyecto**, agrega la interfaz `DSManagerInterface` e implementa los métodos indicados. Dicha interfaz será la encargada de recibir los eventos que el Tracker genera. El programador decidirá que clase es la encargada.
-
-  ```java
-  @Override
-  public void startService(@NonNull DSResult result) {}
-  
-  @Override
-  public void stopService(@NonNull DSResult result) {}
-  
-  @Override
-  public void statusEventService(@NonNull DSResult dsResult) {}
-  ```
-  
 ## Configuración
 
 * En el archivo `Java o Kotlin` del **proyecto**, agrega el objeto principal del Tracker e inicializa:
@@ -233,6 +217,21 @@ dsManager.stop()
 dsManager.sendPendingTrackingData()
 // ...
 ```
+
+## Interfaz pública
+
+* En el archivo `Java o Kotlin` del **proyecto**, agrega la interfaz `DSManagerInterface` e implementa los métodos indicados. Dicha interfaz será la encargada de recibir los eventos que el Tracker genera. El programador decidirá que clase es la encargada.
+
+  ```java
+  @Override
+  public void startService(@NonNull DSResult result) {}
+  
+  @Override
+  public void stopService(@NonNull DSResult result) {}
+  
+  @Override
+  public void statusEventService(@NonNull DSResult dsResult) {}
+  ```
 
 ### Información del viaje:
 Una vez iniciado un viaje, el Tracker ofrece una serie de métodos para poder obtener información del viaje. *DSCheckStatus* se obtiene a través del método *checkService()* con la información:
