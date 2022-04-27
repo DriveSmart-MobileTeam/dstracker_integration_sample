@@ -10,15 +10,14 @@ import com.ds.test.databinding.ActivityMainBinding
 import com.dstracker.enums.DSInternalMotionActivities
 import com.dstracker.enums.DSMotionEvents
 import com.dstracker.enums.DSNotification
-import com.dstracker.enums.DSResult
-import com.dstracker.interfaces.DSManagerInterface
+import com.dstracker.enums.Outcome
+import com.dstracker.interfaces.ManagerInterface
 import com.dstracker.singleton.Tracker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
-class MainActivityKotlin : AppCompatActivity(), DSManagerInterface {
+class MainActivityKotlin : AppCompatActivity(), ManagerInterface {
     private lateinit var binding: ActivityMainBinding
     private lateinit var dsTracker: Tracker
     private lateinit var apkID: String
@@ -100,11 +99,11 @@ class MainActivityKotlin : AppCompatActivity(), DSManagerInterface {
     private fun getOrAddUser(user: String) {
         GlobalScope.launch(Dispatchers.Main) {
             dsTracker.getOrAddUserIdBy(user){result ->
-                if (result is DSResult.Success) {
+                if (result is Outcome.Success) {
                     userSession = result.toString()
                     addLog("User id created: $result")
                 } else {
-                    val error: String = (result as DSResult.Error).toString()
+                    val error: String = (result as Outcome.Error).toString()
                     addLog("getOrAddUser error: $error")
                 }
             }
@@ -113,8 +112,8 @@ class MainActivityKotlin : AppCompatActivity(), DSManagerInterface {
 
     private fun prepareEnvironment() {
         dsTracker = Tracker.getInstance(this)
-        dsTracker.configure(apkID) { dsResult: DSResult ->
-            if (dsResult is DSResult.Success) {
+        dsTracker.configure(apkID) { dsResult: Outcome ->
+            if (dsResult is Outcome.Success) {
                 addLog("DSTracker configured")
                 identifyEnvironmet(userID)
             } else {
@@ -125,7 +124,7 @@ class MainActivityKotlin : AppCompatActivity(), DSManagerInterface {
     }
 
     private fun identifyEnvironmet(uid: String) {
-        dsTracker.setUserId(uid) { result: DSResult? ->
+        dsTracker.setUserId(uid) { result: Outcome? ->
             addLog("Defining USER ID: $uid")
         }
     }
@@ -166,13 +165,13 @@ class MainActivityKotlin : AppCompatActivity(), DSManagerInterface {
     // ****************************************v****************************************
     // ******************** interface DSManagerInterface *******************************
     // ****************************************v****************************************
-    override fun startService(result: DSResult) {
+    override fun startService(result: Outcome) {
         addLog("Evaluating service: $result")
         showTripInfo(result)
     }
 
-    private fun showTripInfo(result: DSResult) {
-        if (result is DSResult.Success) {
+    private fun showTripInfo(result: Outcome) {
+        if (result is Outcome.Success) {
             val notification = result.data as DSNotification
             if (notification.ordinal == DSNotification.DS_RECORDING_TRIP.ordinal) {
                 handlerTrip.postDelayed(updateTimerThread, 500)
@@ -180,8 +179,8 @@ class MainActivityKotlin : AppCompatActivity(), DSManagerInterface {
         }
     }
 
-    override fun statusEventService(dsResult: DSResult) {}
-    override fun stopService(result: DSResult) {
+    override fun statusEventService(dsResult: Outcome) {}
+    override fun stopService(result: Outcome) {
         addLog("Stopping service: $result")
         handlerTrip.removeCallbacks(updateTimerThread)
     }

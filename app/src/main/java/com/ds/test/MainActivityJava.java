@@ -12,16 +12,13 @@ import com.ds.test.databinding.ActivityMainBinding;
 import com.dstracker.enums.DSInternalMotionActivities;
 import com.dstracker.enums.DSMotionEvents;
 import com.dstracker.enums.DSNotification;
-import com.dstracker.enums.DSResult;
-import com.dstracker.interfaces.DSManagerInterface;
+
+import com.dstracker.enums.Outcome;
+import com.dstracker.interfaces.ManagerInterface;
 import com.dstracker.models.TrackingStatus;
 import com.dstracker.singleton.Tracker;
 
-import kotlin.coroutines.Continuation;
-import kotlin.coroutines.CoroutineContext;
-import kotlin.coroutines.EmptyCoroutineContext;
-
-public class MainActivityJava extends AppCompatActivity implements DSManagerInterface {
+public class MainActivityJava extends AppCompatActivity implements ManagerInterface {
 
     private ActivityMainBinding binding;
     private Tracker dsTracker;
@@ -120,11 +117,11 @@ public class MainActivityJava extends AppCompatActivity implements DSManagerInte
     private void prepareEnvironment() {
         dsTracker = Tracker.getInstance(this);
         dsTracker.configure(apkID, dsResult -> {
-            if (dsResult instanceof DSResult.Success) {
+            if (dsResult instanceof Outcome.Success) {
                 addLog("SDk configured");
                 identifyEnvironmet(userID);
             }else{
-                String error = ((DSResult.Error) dsResult).getError().getDescription();
+                String error = ((Outcome.Error) dsResult).getError().getDescription();
                 addLog("Configure SDK: "+error);
             }
             return null;
@@ -179,29 +176,15 @@ public class MainActivityJava extends AppCompatActivity implements DSManagerInte
     // ****************************************v****************************************
     // ******************** interface DSManagerInterface *******************************
     // ****************************************v****************************************
-    @Override
-    public void startService(@NonNull DSResult result) {
-        addLog("Evaluating service: " + result.toString());
 
-        showTripInfo(result);
-    }
 
-    private void showTripInfo(DSResult result) {
-        if (result instanceof DSResult.Success) {
-            DSNotification notification = (DSNotification)((DSResult.Success) result).getData();
+    private void showTripInfo(Outcome result) {
+        if (result instanceof Outcome.Success) {
+            DSNotification notification = (DSNotification)((Outcome.Success) result).getData();
             if (notification.ordinal() == DSNotification.DS_RECORDING_TRIP.ordinal()){
                 handlerTrip.postDelayed(updateTimerThread, 500);
             }
         }
-    }
-
-    @Override
-    public void statusEventService(@NonNull DSResult dsResult) { }
-
-    @Override
-    public void stopService(@NonNull DSResult result) {
-        addLog("Stopping service: " + result.toString());
-        handlerTrip.removeCallbacks(updateTimerThread);
     }
 
     @Override
@@ -213,6 +196,23 @@ public class MainActivityJava extends AppCompatActivity implements DSManagerInte
     @Override
     public void onPointerCaptureChanged(boolean hasCapture) {
 
+    }
+
+    @Override
+    public void startService(@NonNull Outcome outcome) {
+        addLog("Evaluating service: " + outcome.toString());
+        showTripInfo(outcome);
+    }
+
+    @Override
+    public void statusEventService(@NonNull Outcome outcome) {
+
+    }
+
+    @Override
+    public void stopService(@NonNull Outcome outcome) {
+        addLog("Stopping service: " + outcome.toString());
+        handlerTrip.removeCallbacks(updateTimerThread);
     }
     // ****************************************v****************************************
     // ******************** interface DSManagerInterface *******************************
