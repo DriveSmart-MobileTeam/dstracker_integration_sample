@@ -1,11 +1,23 @@
 `See this guide in other languages:`  [![DSTracker](https://img.shields.io/badge/DSTracker%20Integration-Spanish-success)](https://github.com/DriveSmart-MobileTeam/dstracker_lite_integration_sample/blob/main/README-ES.md)
 [![DSTracker](https://img.shields.io/badge/DSTracker%20Integration-Java-success)](https://github.com/DriveSmart-MobileTeam/dstracker_lite_integration_sample/blob/main/README-JAVA.md)
 
-# DSTracker Integration (Kotlin)
+# Tracker Integration (Kotlin)
 
 This quick start guide describes how to configure the DriveSmart Tracker library in your app so that you can evaluate the driving activity tracked by Android devices.
 
 The configuration of DriveSmart Tracker library requires IDE tasks. To finish the setup, you will need to perform a driving test to confirm the correct operation of the environment.
+
+# Table of contents
+1. [Requirements](#requirements)
+2. [Installation](#installation)
+3. [Permissions](#permissions)
+4. [Configuration](#configuration)
+5. [User linking](#user-linking)
+6. [Trip analysis](#trip-analysis)
+  1. [Tracker modes](#tracker-modes)
+  2. [Trip analysis in manual mode](#trip-analysis-in-manual-mode)
+  3. [Public interface](#public-interface)
+  4. [Trip info](#trip-info)
 
 ## Requirements
 If you haven't already, download and install the Android Development Environment and libraries. The integration will be carried out on the next versions:
@@ -50,11 +62,6 @@ dependencies {
 
 ## Permissions
 
-`See this guide in other languages:`  [![DSTracker](https://img.shields.io/badge/DSTracker%20Integration-Spanish-success)](https://github.com/DriveSmart-MobileTeam/dstracker_integration_sample/blob/main/README-ES.md)
-[![DSTracker](https://img.shields.io/badge/DSTracker%20Integration-Java-success)](https://github.com/DriveSmart-MobileTeam/dstracker_integration_sample/blob/main/README-JAVA.md)
-
-# DSTracker Integration (Kotlin)
-
 It is necessary to define the corresponding permissions, otherwise the library will respond with different error messages.
 
 Project Permissions in `Manifest`:
@@ -95,29 +102,12 @@ Manifest.permission.ACCESS_BACKGROUND_LOCATION
 
 If all the permissions indicated are correctly configured, the environment will be configured and trips can be made.
 
-
-## Public interface
-
-* In the ** project ** file, add the interface `DSManagerInterface` and implement the indicated methods. This interface will be in charge of receiving the events that the Tracker generates. The programmer will decide which class is in charge.
-  
-  ```kotlin
-  override fun startService(dsResult: DSResult) {}
-  
-  override fun statusEventService(dsResult: DSResult) {}
-  
-  override fun stopService(dsResult: DSResult) {}
-  
-  override fun motionDetectedActivity(dsInternalMotionActivities: DSInternalMotionActivities, i: int) {}
-  
-  override fun motionStatus(dsMotionEvents: DSMotionEvents) {}
-  ```
-
 ## Configuration
 * In the **project** file, add the library main object and initialize it:
 
   ```kotlin
     // ...
-    private DSTrackerLite dsTrackerLite
+    private Tracker tracker
     private lateinit var apkID: String
     private lateinit var userID: String
     // ...
@@ -136,14 +126,14 @@ If all the permissions indicated are correctly configured, the environment will 
     }
   
     private fun prepareEnvironment() {
-        dsTrackerLite = DSTrackerLite.getInstance(this)
-        dsTrackerLite.configure(apkID) { dsResult: DSResult ->
+        tracker = Tracker.getInstance(this)
+        tracker.configure(apkID) { dsResult: DSResult ->
             if (dsResult is DSResult.Success) {
-                addLog("DSTracker configured")
+                addLog("Tracker configured")
                 identifyEnvironmet(userID)
             } else {
                 val error: String = dsResult.toString()
-                addLog("Configure DSTracker: $error")
+                addLog("Configure Tracker: $error")
             }
         }
     }
@@ -157,7 +147,7 @@ A unique user identifier is required for the DriveSmart Library to create trips.
 
 ```kotlin
 // ... 
-dsTrackerLite.setUserId(uid) {
+tracker.setUserId(uid) {
   addLog("Defining USER ID: $uid")
 }
 // ... 
@@ -178,11 +168,18 @@ private fun getOrAddUser(user: String) {
 
 If the received object is valid, then the userId must be defined in the library method already commented.
 
-## Step 4: Trip analysis
+## Trip analysis
 
-### Basic trip control:
+### Tracker modes
 
-To control the DSTracker we can use this actions:
+El tracker ofrece tres modos de funcionamiento:
+- Manual: se debe iniciar y finalizar los viajes de forma manual
+- Por manos libres: Los viajes comienzan cuando se conectan a un dispositivo bluetooth seleccionado, y finalizan cuando se desconectan de este.
+- Por movimiento: Según el movimiento detectado por los sensores del dispositivo, el tracker decide cuando se inicia o finaliza un viaje.
+
+### Trip analysis in manual mode
+
+To control the Tracker we can use this actions:
 
 ```
 // ...
@@ -195,54 +192,20 @@ dsManager.stopService();
 // ...
 ```
 
-### Automatic or semi automatic trip control
+### Public interface
 
-The Drive-Smart Tracker must be configured to allow automatic or semi-automatic evaluation of trips. If automatic evaluation is configured, it is not necessary to have the application open.
+* In the ** project ** file, add the interface `DSManagerInterface` and implement the indicated methods. This interface will be in charge of receiving the events that the Tracker generates. The programmer will decide which class is in charge.
 
-In the case of configuring semi-automatic travel evaluation, it is essential to keep the application open.
+  ```kotlin
+  override fun startService(dsResult: DSResult) {}
+  
+  override fun stopService(dsResult: DSResult) {}
+  
+  override fun statusEventService(dsResult: DSResult) {}
+  ```
 
-Initially, we deactivate the automatic trip evaluation function, at the end of the operation, we define how we want to evaluate trips:
-
-* **Automatic:**
-  Set the first parameter to `TRUE` and the second to` TRUE`.
-
-* **Semi-Automatic:**
-  Set the first parameter to `TRUE` and the second to` FALSE`.
-
-```kotlin
-
-// ... 
-// AUTOMATIC:
-dsManager.setMotionStart(
-                            enable = true,
-                            isForegroundService = true
-                        ) { dsResult2: DSResult ->
-                            addLog("Motion - automatic (enable): $dsResult2")
-                        }
-
-// ... 
-
-// SEMI-AUTOMATIC:
-dsManager.setMotionStart(
-                            enable = true,
-                            isForegroundService = false
-                        ) { dsResult2: DSResult ->
-                            addLog("Motion - automatic (enable): $dsResult2")
-                        }
-
-// ... 
-
-```
-
-You can check if the automatic mode is active:
-
-```
-// ... 
-dsManager.isMotionServiceAlive()
-// ... 
-```
 ### Trip info:
-Once a trip has started, DSTracker offers a method for obtaining trip information. *TrackingStatus* is obtained throught the *getStatus()* method with the info:
+Once a trip has started, Tracker offers a method for obtaining trip information. *TrackingStatus* is obtained throught the *getStatus()* method with the info:
 + Total distance
 + Trip time
 + Trio id

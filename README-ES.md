@@ -1,12 +1,23 @@
 `Ver esta guía en otros idiomas:`  [![DSTracker](https://img.shields.io/badge/DSTracker%20Integration-English-success)](https://github.com/DriveSmart-MobileTeam/dstracker_integration_sample/blob/main/README.md)
 [![DSTracker](https://img.shields.io/badge/DSTracker%20Integration-Java-success)](https://github.com/DriveSmart-MobileTeam/dstracker_integration_sample/blob/main/README-JAVA-ES.md)
 
-# Integración de DSTracker (Kotlin)
+# Integración de Tracker (Kotlin)
 
 En esta guía de inicio rápido, se describe cómo configurar el Tracker de Drive-Smart en tu app para que puedas evaluar los viajes realizados a través de dispositivos Android.
 
 La configuración del Tracker de Drive-Smart requiere realizar tareas en el IDE. Para finalizar la configuración, deberás realizar un viaje de prueba a fin de confirmar el funcionamiento correcto del entorno.
 
+# Tabla de contenidos
+1. [Requisitos](#requisitos)
+2. [Instalación](#instalacin)
+3. [Permisos](#permisos)
+4. [Configuración](#configuracin)
+5. [Vinculación de usuarios](#vinculacin-de-usuarios)
+6. [Registro de viajes](#registro-de-viajes)
+  1. [Modos del Tracker](#modos-del-tracker)
+  2. [Control de viajes en modo manual](#control-de-viajes-en-modo-manual)
+  3. [Interfaz pública](#interfaz-pblica)
+  4. [Información del viaje](#informacin-del-viaje)
 
 ## Requisitos
 
@@ -100,35 +111,13 @@ boolean isbatteryOptimized = powerManager.isDeviceIdleMode() && !powerManager.is
 
 Si todos los permisos indicados están correctamente configurados, el entorno estará configurado y se podrán realizar viajes.
 
-
-## Interfaz pública
-
-* En el archivo del **proyecto**, agrega la interfaz `DSManagerInterface` e implementa los métodos indicados. Dicha interfaz será la encargada de recibir los eventos que el Tracker genera. El programador decidirá que clase es la encargada.
-
-  ```java
-  @Override
-  public void startService(@NonNull DSResult result) {}
-  
-  @Override
-  public void statusEventService(@NonNull DSResult dsResult) {}
-  
-  @Override
-  public void stopService(@NonNull DSResult result) {}
-  
-  @Override
-  public void motionDetectedActivity(@NonNull DSInternalMotionActivities dsInternalMotionActivities, int i) { }
-  
-  @Override
-  public void motionStatus(@NonNull DSMotionEvents dsMotionEvents) { }
-  ```
-  
 ## Configuración
 
 * En el archivo `Java o Kotlin` del **proyecto**, agrega el objeto principal del Tracker e inicializa:
 
   ```kotlin
     // ...
-    private DSTrackerLite dsTrackerLite
+    private Tracker tracker
     private lateinit var apkID: String
     private lateinit var userID: String
     // ...
@@ -147,14 +136,14 @@ Si todos los permisos indicados están correctamente configurados, el entorno es
     }
   
     private fun prepareEnvironment() {
-        dsTrackerLite = DSTrackerLite.getInstance(this)
-        dsTrackerLite.configure(apkID) { dsResult: DSResult ->
+        tracker = Tracker.getInstance(this)
+        tracker.configure(apkID) { dsResult: DSResult ->
             if (dsResult is DSResult.Success) {
-                addLog("DSTracker configured")
+                addLog("Tracker configured")
                 identifyEnvironmet(userID)
             } else {
                 val error: String = dsResult.toString()
-                addLog("Configure DSTracker: $error")
+                addLog("Configure Tracker: $error")
             }
         }
     }
@@ -169,7 +158,7 @@ Para que el Tracker de Drive-Smart pueda crear viajes se necesita un identificad
 
 ```kotlin
 // ... 
-dsTrackerLite.setUserId(uid) {
+tracker.setUserId(uid) {
             addLog("Defining USER ID: $uid")
         }
 // ... 
@@ -191,11 +180,18 @@ private fun getOrAddUser(user: String) {
 Si el objeto recibido es valido, a continuación, se debe definir el userID en el método del Tracker ya comentado
 
 
-## Paso4: Evaluación de viajes
+## Registro de viajes
 
-### Control de viajes básico:
+### Modos del tracker
 
-Para controlar el DSTracker se muestran las siguientes acciones:
+El tracker ofrece tres modos de funcionamiento:
+- Manual: se debe iniciar y finalizar los viajes de forma manual
+- Por manos libres: Los viajes comienzan cuando se conectan a un dispositivo bluetooth seleccionado, y finalizan cuando se desconectan de este.
+- Por movimiento: Según el movimiento detectado por los sensores del dispositivo, el tracker decide cuando se inicia o finaliza un viaje.
+
+### Control de viajes en modo manual
+
+Para controlar el Tracker se muestran las siguientes acciones:
 ```
 // ...
 // Iniciar un viaje:
@@ -207,52 +203,18 @@ dsManager.stopService()
 // ...
 ```
 
-### Control de viajes automático o semi automático
+### Interfaz pública
 
-Es preciso configurar el Tracker de Drive-Smart para que permita la evaluación automática o semi-automática de viajes. Si se configura la evaluación automática, no es necesario tener la aplicación abierta. 
+* En el archivo del **proyecto**, agrega la interfaz `DSManagerInterface` e implementa los métodos indicados. Dicha interfaz será la encargada de recibir los eventos que el Tracker genera. El programador decidirá que clase es la encargada.
 
-En el caso de configurar la evaluación de viajes semi-automática, es imprescindible mantener la aplicación abierta.
+  ```kotlin
+  override fun startService(dsResult: DSResult) {}
+  
+  override fun stopService(dsResult: DSResult) {}
+  
+  override fun statusEventService(dsResult: DSResult) {}
+  ```
 
-Inicialmente, desactivamos la función automática de evaluación de viajes, al finalizar la operación, definimos como queremos evaluar viajes:
-
-* **Automática:**
-  Se define el primer parametro a `TRUE` y el segundo a `TRUE`.
-
-* **Semi-Automática:**
-  Se define el primer parametro a `TRUE` y el segundo a `FALSE`.
-
-```kotlin
-
-// ... 
-// AUTOMATIC:
-dsManager.setMotionStart(
-                            enable = true,
-                            isForegroundService = true
-                        ) { dsResult2: DSResult ->
-                            addLog("Motion - automatic (enable): $dsResult2")
-                        }
-
-// ... 
-
-// SEMI-AUTOMATIC:
-dsManager.setMotionStart(
-                            enable = true,
-                            isForegroundService = false
-                        ) { dsResult2: DSResult ->
-                            addLog("Motion - automatic (enable): $dsResult2")
-                        }
-
-// ... 
-
-```
-
-Se puede consultar si el modo automático está activo:
-
-```
-// ... 
-dsManager.isMotionServiceAlive()
-// ... 
-```
 
 ### Información del viaje:
 Una vez iniciado un viaje, el Tracker ofrece una serie de métodos para poder obtener información del viaje. *DSCheckStatus* se obtiene a través del método *checkService()* con la información:
@@ -272,5 +234,11 @@ A su vez, el método *tripInfo()* ofrece otros datos:
 ```
 // ...
 DSInfoTrip info = dsManager.tripInfo()
+// ...
+```
+Si quieres saber si el servicio del tracker está funcionando en ese momento:
+```
+// ...
+dsManager.isRunningService()
 // ...
 ```
