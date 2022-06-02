@@ -5,6 +5,7 @@
     <string name="stop_trip">Stop</string>
     <string name="define_user">Define user</string>
     <string name="stablish_user">Stablish user</string>
+    <string name="anonymous_user">Anonymous user</string>
     <string name="text_or_email">text /or/ email</string>
     <string name="manual_title">Manual Trips</string>
     <string name="auto_title">Automatic Trips</string>

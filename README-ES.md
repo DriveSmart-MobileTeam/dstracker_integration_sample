@@ -55,7 +55,7 @@ Si aún no lo has hecho, descarga e instala el entorno de desarrollo y las libre
 ```
 dependencies {
 	// ......
-	implementation 'DriveSmart:DS-Tracker:1.0'
+	implementation 'DriveSmart:DS-Tracker:1.2.1'
   	// ......
 }
 ```
@@ -167,9 +167,9 @@ tracker.setUserId(uid) {
 Para obtener un identificador de usuario válido, se puede consultar el siguiente servicio, el cual creará un nuevo usuario en el sistema de Drive-Smart o devolverá el usuario en caso de existir.
 
 ```kotlin
-private fun getOrAddUser(user: String) {
+private fun getOrAddUserIdBy(userId: String) {
         GlobalScope.launch(Dispatchers.Main) {
-            val session = getUserSession(user)
+            val session = getOrAddUserIdBy(userId)
 
             userSession = session
             addLog("User id created: $session")
@@ -178,6 +178,19 @@ private fun getOrAddUser(user: String) {
 ```
 
 Si el objeto recibido es valido, a continuación, se debe definir el userID en el método del Tracker ya comentado
+
+Si no se requiere vincular el usuario con un viaje, será necesario utilizar la función getAnonymousUser()
+
+```kotlin
+private fun getAnonymousUser() {
+        GlobalScope.launch(Dispatchers.Main) {
+            val session = getAnonymousUser()
+
+            userSession = session
+            addLog("User id created: $session")
+            }
+    }
+```
 
 
 ## Registro de viajes

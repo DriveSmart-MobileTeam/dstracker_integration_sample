@@ -70,6 +70,9 @@ class MainActivityKotlin : AppCompatActivity(), ManagerInterface {
                 getOrAddUser(binding.userId.text.toString())
             }
         }
+        binding.anonymousUserButton.setOnClickListener {
+            getAnonymousUser()
+        }
     }
 
     private fun checkPerms() {
@@ -95,10 +98,23 @@ class MainActivityKotlin : AppCompatActivity(), ManagerInterface {
         }
     }
 
-
     private fun getOrAddUser(user: String) {
         GlobalScope.launch(Dispatchers.Main) {
             dsTracker.getOrAddUserIdBy(user){result ->
+                if (result is Outcome.Success) {
+                    userSession = result.toString()
+                    addLog("User id created: $result")
+                } else {
+                    val error: String = (result as Outcome.Error).toString()
+                    addLog("getOrAddUser error: $error")
+                }
+            }
+        }
+    }
+
+    private fun getAnonymousUser() {
+        GlobalScope.launch(Dispatchers.Main) {
+            dsTracker.getAnonymousUser{result ->
                 if (result is Outcome.Success) {
                     userSession = result.toString()
                     addLog("User id created: $result")

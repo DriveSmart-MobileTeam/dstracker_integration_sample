@@ -7,8 +7,8 @@ dependencyResolutionManagement {
             url 'https://tfsdrivesmart.pkgs.visualstudio.com/5243836b-8777-4cb6-aded-44ab518bc748/_packaging/Android_Libraries/maven/v1'
             name 'Android_Libraries'
             credentials {
-                username "USERNAME"
-                password "PASSWORD"
+                username "tfsdrivesmart"
+                password System.getenv("AZURE_ARTIFACTS_ENV_ACCESS_TOKEN") != null ? System.getenv("AZURE_ARTIFACTS_ENV_ACCESS_TOKEN") : vstsMavenAccessToken
             }
         }
     }

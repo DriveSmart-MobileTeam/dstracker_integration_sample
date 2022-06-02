@@ -55,7 +55,7 @@ Si aún no lo has hecho, descarga e instala el entorno de desarrollo y las libre
 ```
 dependencies {
 	// ......
-	implementation 'DriveSmart:DS-Tracker:1.1.4'
+	implementation 'DriveSmart:DS-Tracker:1.2.1'
   	// ......
 }
 ```

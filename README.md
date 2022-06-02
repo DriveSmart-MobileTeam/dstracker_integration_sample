@@ -54,7 +54,7 @@ If you haven't already, download and install the Android Development Environment
 ```
 dependencies {
 	// ......
-	implementation 'DriveSmart:DS-Tracker:1.0'
+	implementation 'DriveSmart:DS-Tracker:1.2.1'
   	// ......
 }
 ```
@@ -156,9 +156,9 @@ tracker.setUserId(uid) {
 To obtain a valid user identifier, the following service can be consulted, whitch will create a new user in the DriveSmart System or return the user if it exist.
 
 ```kotlin
-private fun getOrAddUser(user: String) {
+private fun getOrAddUserIdBy(userId: String) {
   GlobalScope.launch(Dispatchers.Main) {
-    val session = getUserSession(user)
+    val session = getOrAddUserIdBy(userId)
 
     userSession = session
     addLog("User id created: $session")
@@ -167,6 +167,19 @@ private fun getOrAddUser(user: String) {
 ```
 
 If the received object is valid, then the userId must be defined in the library method already commented.
+
+If it is not required to link a specific user with a trip, it will be necessary to use the function getAnonymousUser()
+
+```kotlin
+private fun getAnonymousUser() {
+        GlobalScope.launch(Dispatchers.Main) {
+            val session = getAnonymousUser()
+
+            userSession = session
+            addLog("User id created: $session")
+            }
+    }
+```
 
 ## Trip analysis
 
